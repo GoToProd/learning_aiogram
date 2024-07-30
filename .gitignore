@@ -1,0 +1,7 @@
+venv/
+.env
+answer.json
+photo.jpg
+*.jpg
+.gitattributes
+__pycache__
