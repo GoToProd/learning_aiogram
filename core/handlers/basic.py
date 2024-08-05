@@ -2,21 +2,36 @@ import os
 import json
 from aiogram import Bot, F, Router
 from aiogram.types import Message
+from core.keyboards.reply import (
+    reply_keyboard,
+    local_tel_pol_keyboard,
+    get_reply_keyboard,
+)
+from core.keyboards.inline import select_macbook, get_inline_keyboard
+
 
 router = Router()
 file_path = os.path.abspath("answer.json")
 
 
 async def get_start(message: Message, bot: Bot):
-    await bot.send_message(
-        message.from_user.id,
-        f"<b>Привет {message.from_user.username}, напиши мне 'Привет'</b>",
-    )
     await message.answer(
-        f"<s>Привет {message.from_user.username}, {message.from_user.first_name}</s>"
+        f"<s>Привет {message.from_user.username}, {message.from_user.first_name}</s>",
+        reply_markup=get_reply_keyboard(),
     )
-    await message.reply(
-        f"<tg-spoiler>Привет {message.from_user.username}, {message.from_user.first_name}</tg-spoiler>"
+
+
+async def get_inline(message: Message, bot: Bot):
+    await message.answer(
+        f"Привет, {message.from_user.first_name}. Показываю инлайн кнопки",
+        reply_markup=get_inline_keyboard(),
+    )
+
+
+async def get_location(message: Message, bot: Bot):
+    await message.answer(
+        f"Ты отправил локацию\r\a",
+        f"{message.location.latitude} \r\n {message.location.longitude}",
     )
 
 
