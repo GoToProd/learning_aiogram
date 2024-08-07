@@ -5,3 +5,8 @@ photo.jpg
 *.jpg
 .gitattributes
 __pycache__
+*.mp3
+*.mp4
+*.png
+*.docx
+*.opus

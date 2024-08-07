@@ -30,6 +30,8 @@ from core.middlewares.countermiddleware import CounterMiddleware
 # from core.middlewares.officehourse import OfficeHourseMiddleware
 from core.middlewares.dbmiddleware import DbSession
 from core.middlewares.apschedulermiddleware import ShedulerMiddleware
+from aiogram.utils.chat_action import ChatActionMiddleware
+from core.middlewares.example_chat_action_middleware import ExampleChatActionMiddleware
 
 # import asyncpg
 import psycopg_pool
@@ -45,6 +47,7 @@ from aiogram.fsm.storage.redis import RedisStorage
 from apscheduler.jobstores.redis import RedisJobStore
 from apscheduler_di import ContextSchedulerDecorator
 
+from core.handlers import send_media
 
 # фикс событий (актуально было на версию 3.00.4b)
 # asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
@@ -134,10 +137,54 @@ async def start():
     dp.startup.register(start_bot)
     dp.shutdown.register(stop_bot)
 
+    # Работа с медиа файлами
+    dp.message.register(
+        send_media.get_audio,
+        Command(commands="audio"),
+        flags={"chat_action": "upload_document"},
+    )
+    dp.message.register(
+        send_media.get_document,
+        Command(commands="document"),
+        flags={"chat_action": "upload_document"},
+    )
+    dp.message.register(
+        send_media.get_media_group,
+        Command(commands="mediagroup"),
+        flags={"chat_action": "upload_photo"},
+    )
+    dp.message.register(
+        send_media.get_photo,
+        Command(commands="photo"),
+        flags={"chat_action": "upload_photo"},
+    )
+    dp.message.register(
+        send_media.get_sticker,
+        Command(commands="sticker"),
+        flags={"chat_action": "choose_sticker"},
+    )
+    dp.message.register(
+        send_media.get_video,
+        Command(commands="video"),
+        flags={"chat_action": "upload_video"},
+    )
+    dp.message.register(
+        send_media.get_video_note,
+        Command(commands="video_note"),
+        flags={"chat_action": "upload_video_note"},
+    )
+    dp.message.register(
+        send_media.get_voice,
+        Command(commands="voice"),
+        flags={"chat_action": "upload_voice"},
+    )
+
     # Для работы с БД, счетчик сообщений и контроля часов работы
     dp.update.middleware.register(DbSession(pool_connect))
     dp.update.middleware.register(ShedulerMiddleware(scheduler))
     dp.message.middleware.register(CounterMiddleware())
+    # dp.message.middleware.register(ChatActionMiddleware())
+    dp.message.middleware.register(ExampleChatActionMiddleware())
     # dp.message.middleware.register(OfficeHourseMiddleware())
 
     # Для инлайн клавиатуры

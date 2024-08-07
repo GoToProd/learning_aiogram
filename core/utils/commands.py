@@ -10,5 +10,12 @@ async def set_commands(bot: Bot):
         BotCommand(command="inline", description="Показать инлайн клавиатуру"),
         BotCommand(command="pay", description="Оплатить товар"),
         BotCommand(command="form", description="Начать опрос"),
+        BotCommand(command="audio", description="Прислать аудио"),
+        BotCommand(command="document", description="Прислать документ"),
+        BotCommand(command="mediagroup", description="Прислать медиагруппу"),
+        BotCommand(command="sticker", description="Прислать стикер"),
+        BotCommand(command="video", description="Прислать видео"),
+        BotCommand(command="video_note", description="Прислать видеосообщение"),
+        BotCommand(command="voice", description="Прислать голосовое сообщение"),
     ]
     await bot.set_my_commands(commands, BotCommandScopeDefault())
