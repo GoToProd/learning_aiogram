@@ -8,13 +8,16 @@ from core.keyboards.reply import (
     get_reply_keyboard,
 )
 from core.keyboards.inline import select_macbook, get_inline_keyboard
+from core.utils.dbconnect import Request
 
 
 router = Router()
 file_path = os.path.abspath("answer.json")
 
 
-async def get_start(message: Message, bot: Bot):
+async def get_start(message: Message, bot: Bot, counter: str, request: Request):
+    await request.add_data(message.from_user.id, message.from_user.first_name)
+    await message.answer(f"Сообщение #{counter}")
     await message.answer(
         f"<s>Привет {message.from_user.username}, {message.from_user.first_name}</s>",
         reply_markup=get_reply_keyboard(),
