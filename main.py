@@ -29,6 +29,7 @@ from core.middlewares.countermiddleware import CounterMiddleware
 
 # from core.middlewares.officehourse import OfficeHourseMiddleware
 from core.middlewares.dbmiddleware import DbSession
+from core.middlewares.apschedulermiddleware import ShedulerMiddleware
 
 # import asyncpg
 import psycopg_pool
@@ -36,7 +37,16 @@ import psycopg_pool
 from core.handlers import form
 from core.utils.statesform import StepsForm
 
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from core.handlers import apsched
+from datetime import datetime, timedelta
 
+from aiogram.fsm.storage.redis import RedisStorage
+from apscheduler.jobstores.redis import RedisJobStore
+from apscheduler_di import ContextSchedulerDecorator
+
+
+# фикс событий (актуально было на версию 3.00.4b)
 # asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
 
@@ -79,8 +89,46 @@ async def start():
     bot = Bot(TOKEN_API, default=DefaultBotProperties(parse_mode="HTML"))
     # pool_connect = await create_pool()
     pool_connect = create_pool()
+    storage = RedisStorage.from_url("redis://localhost:6379/0")
 
-    dp = Dispatcher()
+    dp = Dispatcher(storage=storage)
+
+    jobstores = {
+        "default": RedisJobStore(
+            jobs_key="dispatched_trips_jobs",
+            run_times_key="dispatched_trips_running",
+            host="localhost",
+            db=2,
+            port=6379,
+        ),
+    }
+
+    # Работа с Sheduled модулем
+    scheduler = ContextSchedulerDecorator(
+        AsyncIOScheduler(timezone="Europe/Moscow", jobstores=jobstores)
+    )
+    scheduler.ctx.add_instance(bot, declared_class=Bot)
+    scheduler.add_job(
+        apsched.send_message_time,
+        trigger="date",
+        run_date=datetime.now() + timedelta(seconds=10),
+        # kwargs={"bot": bot},
+    )
+    scheduler.add_job(
+        apsched.send_message_cron,
+        trigger="cron",
+        hour=datetime.now().hour,
+        minute=datetime.now().minute + 1,
+        start_date=datetime.now(),
+        # kwargs={"bot": bot},
+    )
+    scheduler.add_job(
+        apsched.send_message_interval,
+        trigger="interval",
+        seconds=60,
+        # kwargs={"bot": bot},
+    )
+    scheduler.start()
 
     # Управление запуском и остановкой бота
     dp.startup.register(start_bot)
@@ -88,6 +136,7 @@ async def start():
 
     # Для работы с БД, счетчик сообщений и контроля часов работы
     dp.update.middleware.register(DbSession(pool_connect))
+    dp.update.middleware.register(ShedulerMiddleware(scheduler))
     dp.message.middleware.register(CounterMiddleware())
     # dp.message.middleware.register(OfficeHourseMiddleware())
 
